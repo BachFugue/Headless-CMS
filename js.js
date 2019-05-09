@@ -21,6 +21,9 @@ function paramFactory(key) {
 		return param + value;
 	}
 }
+
+var baseURL;
+var route = '/wp/v2/posts?_embed';
 var setPage = paramFactory('page');
 
 var pageNum = window.pageNum = 1;
@@ -36,6 +39,17 @@ function flipPage(direction){
 	}
 }
 
+function setWebsite(){
+	baseURL = document.getElementById('website').value;
+	if (baseURL.substring(0, 7) != 'http://') baseURL = 'http://' + baseURL;
+	if (baseURL[baseURL.length - 1] == '/') baseURL = baseURL.substring(0, baseURL.length - 1);
+	console.log(baseURL.substring(0, baseURL.length - 1));
+	baseURL += '/wp-json';
+	
+	requestContent();
+	requestTitle();
+}
+
 //Instantiate factories as closures
 createH1 = elementFactory('H1');
 createH3 = elementFactory('H3');
@@ -47,7 +61,8 @@ createPage = elementFactory('SPAN');
 
 const requestContent = async () => {
 		console.log('Requested page ' + pageNum);
-    const response = await fetch('http://flatheadbeacon.staging.wpengine.com/wp-json/wp/v2/posts?_embed' + setPage(pageNum));
+		console.log(baseURL + route + setPage(pageNum));
+    const response = await fetch(baseURL + route + setPage(pageNum));
     const json = await response.json();
     stories.innerHTML = '';
     for (let post of json) {
@@ -57,17 +72,16 @@ const requestContent = async () => {
 			createDiv(post._embedded['wp:term'][0][0].slug);
 			createHr('');
 		}
-		pageNum != 1 ? createNext('next', 'third left') : createDiv('', 'third left');
+		pageNum != 1 ? createNext('newer', 'third left') : createDiv('', 'third left');
 		createPage(pageNum, 'third center');
-		createBack('back', 'third right');
+		createBack('older', 'third right');
 		
 }
-requestContent();
 
 const requestTitle = async () => {
-    const response = await fetch('https://flatheadbeacon.staging.wpengine.com/wp-json/');
+    const response = await fetch(baseURL);
     const json = await response.json();
     document.getElementById('title').innerHTML = json.name;
 }
-requestTitle();
+
 
